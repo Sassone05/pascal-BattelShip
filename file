@@ -1,0 +1,642 @@
+program Battaglianavale;
+
+{$mode objfpc}{$H+}
+
+uses
+  {$IFDEF UNIX}
+  cthreads,
+  {$ENDIF}
+  Classes
+  { you can add units after this },crt,sysutils ;
+
+type matrice=array[0..300,0..300]of integer;
+     stringa=string[20];
+
+procedure intro();
+	begin
+	writeln('           ____    _  _____ _____ _     _____ ____  _   _ ___ ____');
+	writeln('          | __ )  / \|_   _|_   _| |   | ____/ ___|| | | |_ _|  _ \');
+	writeln('          |  _ \ / _ \ | |   | | | |   |  _| \___ \| |_| || || |_) ');
+	writeln('          | |_) / ___ \| |   | | | |___| |___ ___) |  _  || ||  __/');
+	writeln('          |____/_/   \_\_|   |_| |_____|_____|____/|_| |_|___|_|');
+	writeln('');
+	writeln('      /\                                                             /\');
+	writeln('      ||                                                             ||');
+	writeln('      ||                             |__                             ||');
+	writeln('     /||\                            |\/                            /||\');
+	writeln('    /:||:\                           ---                           /:||:\');
+	writeln('    |:||:|                           / | [                         |:||:|');
+	writeln('    |/||\|                    !      | |||                         |/||\|');
+	writeln('      **                    _/|     _/|-++`                          **');
+	writeln('      **                +  +--|    |--|--|_ |-                       **');
+	writeln('                     { /|__|  |/\__|  |--- |||__/');
+	writeln('                    +---------------___[}-_===_.`____                 /\');
+	writeln('                ____`-` ||___-{]_| _[}-  |     |_[___\==--            \/');
+	writeln(' __..._____--==/___]_|__|_____________________________[___\==--____,------` .7');
+	writeln('|                                                                     BB-61/');
+	writeln(' \_________________________________________________________________________|');
+	writeln();
+	end;
+
+procedure tabellagioco();
+var
+  i,f,num:integer;
+  lett:char;
+begin
+  num:=1;
+  i:=1;
+  lett:=chr(65);
+  repeat
+
+    i:=i+6;
+    for f:=4 to 33 do
+     begin
+      gotoxy(i,f);
+      if (f mod 3=0) then write('L_____')
+                     else write('|     ');
+     end;
+
+  until (i>60) ;
+
+  for f:=4 to 33 do
+   begin
+   gotoxy(6,f);
+   write(' |');
+   gotoxy(67,f);
+   write('|');
+   end;
+
+   for f:=8 to 66 do
+    begin
+    gotoxy(f,3);
+   write('_');
+    end;
+
+   for f:=7 to 66 do
+    begin
+    gotoxy(f-2,2);
+    if (f mod 6=0) then
+                   begin
+                     write(num);
+                     num:=num+1;
+                   end;
+    end;
+   num:=65;
+   for f:=2 to 32 do
+    begin
+    gotoxy(3,f+2);
+    if (f mod 3=0) then
+                   begin
+                     write(lett);
+                     num:=num+1;
+                     lett:=chr(num);
+                   end;
+    end;
+end;
+
+FUNCTION keyread:integer;
+
+VAR
+  value:integer;
+
+BEGIN
+  value := ord(upcase(readkey));
+  IF value = 0 THEN
+    value := ord(readkey) + 300;
+  keyread := value;
+END;
+
+procedure azzeramatrice(var matrice:matrice);
+ var
+   f,i:integer;
+ begin
+
+   for i:=1 to 300 do
+    begin
+         for f:=1 to 300 do
+          begin
+           matrice[i,f]:=0;
+          end;
+ end;
+ end;
+procedure stampanavi();
+
+var i:integer;
+begin
+  gotoxy(80,9);
+  write('               __/___');
+  gotoxy(80,10);
+  write('         _____/______|');
+  gotoxy(80,11);
+  write(' _______/_____\_______\_____');
+  gotoxy(80,12);
+  write(' \              < < <       |');
+  gotoxy(80,13);
+  write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  (1 da 4 caselle)');
+
+  for i:=0 to 1 do
+   begin
+    gotoxy(80+i*20,15);
+    write('      _    _');
+    gotoxy(80+i*20,16);
+    write('   __|_|__|_|__ ');
+    gotoxy(80+i*20,17);
+    write(' _|____________|__');
+    gotoxy(80+i*20,18);
+    write('|o o o o o o o o /');
+    gotoxy(80+i*20,19);
+    write('~~~~~~~~~~~~~~~~~~~~~~    (2 da 3 caselle)');
+   end;
+
+  for i:=0 to 3 do
+   begin
+   gotoxy(80+i*18,21);
+   write('   ~.');
+   gotoxy(80+i*18,22);
+   write('   /|');
+   gotoxy(80+i*18,23);
+   write('  / |');
+   gotoxy(80+i*18,24);
+   write(' /__|__ ___');
+   gotoxy(80+i*18,25);
+   write(' \--------/');
+   gotoxy(80+i*18,26);
+   write('~~~~~~~~~~~~~    (4 da 2 caselle)');
+   end;
+end;
+
+procedure posizionamentonavi(var mat:matrice; nome:stringa);
+var
+  key,i,x,y,casual:integer;
+  flag,range:boolean;
+begin
+  range:=false;
+  flag:=false;
+  gotoxy(80,5);
+  write(nome+' PIAZZA LE TUE NAVI USANDO LE FRECCIE, PREMI INVIO PER CONFERMARE');
+  gotoxy(80,7);
+  write('QUESTE SONO LE TUE NAVI:');
+  stampanavi();
+  for i:=0 to 6 do
+   begin
+     case (i) of
+       1:textcolor(2);
+       2:textcolor(3);
+       3:textcolor(4);
+       4:textcolor(5);
+       5:textcolor(6);
+     end;
+
+    repeat
+//   write(key);
+    case (i) of
+          0:begin
+          x:=34;
+          y:=20;
+          repeat
+            gotoxy(x-12,y);
+            write('O');
+            gotoxy(x-6,y);
+            write('O');
+            gotoxy(x,y);
+            write('O');
+            gotoxy(x+6,y);
+            write('O');
+            key:=0;
+            key:=keyread();
+            if(key<>13) then
+              begin
+              gotoxy(x-12,y);
+              write(' ');
+              gotoxy(x-6,y);
+              write(' ');
+              gotoxy(x,y);
+              write(' ');
+              gotoxy(x+6,y);
+              write(' ');
+            if ((key=380) and (y<32) )  then
+              begin
+              gotoxy(x,y+3);
+              y:=y+3;
+              end;
+
+            if ((key=372) and (y>6 ))  then
+              begin
+             gotoxy(x,y-3);
+              y:=y-3;
+              end;
+
+            if ((key=377) and (x<57) )  then
+              begin
+              gotoxy(x+6,y);
+              x:=x+6;
+              end;
+            if ((key=375) and (x>24 ))  then
+              begin
+              gotoxy(x-6,y);
+              x:=x-6;
+              end;
+              end;
+
+            until (key=13 );
+            mat[x-12,y]:=1;
+            mat[x-6,y]:=1;
+            mat[x,y]:=1;
+            mat[x+6,y]:=1;
+          end;
+          1:begin
+
+            repeat
+            x:=34;
+            y:=20;
+            casual:=Random(10)-5;
+            x:=x +casual*6;
+            y:=y +casual*3;
+            if((y<34) and (x<67) and (x>7) and (y>4)) then range:=true
+                                                      else range:=false;
+            until((mat[x,y-3]=0) and (mat[x,y]=0) and (mat[x,y+3]=0) and (range=true) ) ;
+
+          repeat
+            gotoxy(x,y-3);
+            write('O');
+            gotoxy(x,y);
+            write('O');
+            gotoxy(x,y+3);
+            write('O');
+            key:=0;
+            key:=keyread();
+            if(key<>13) then
+              begin
+            gotoxy(x,y-3);
+            write(' ');
+            gotoxy(x,y);
+            write(' ');
+            gotoxy(x,y+3);
+            write(' ');
+            if ((key=380) and (y<27) and (mat[x,y+6]=0) and (mat[x,y]=0) and (mat[x,y+3]=0) )then y:=y+3;
+
+            if ((key=372) and (y>9 ) and (mat[x,y-6]=0) and (mat[x,y]=0) and (mat[x,y-3]=0) )  then y:=y-3;
+
+            if ((key=377) and (x<60) and (mat[x+6,y-3]=0) and (mat[x+6,y]=0) and (mat[x+6,y+3]=0))  then x:=x+6;
+
+            if ((key=375) and (x>15) and (mat[x-6,y-3]=0) and (mat[x-6,y]=0) and (mat[x-6,y+3]=0))  then x:=x-6;
+
+            end;
+            until(key=13);
+
+            mat[x,y-3]:=1;
+            mat[x,y]:=1;
+            mat[x,y+3]:=1;
+            end;
+
+          2:begin
+
+            repeat
+            x:=34;
+            y:=20;
+            casual:=Random(10)-5;
+            x:=x +casual*6;
+            y:=y +casual*3;
+            if((y<30) and (x<60) and (x>9) and (y>8)) then range:=true
+                                                      else range:=false;
+            until((mat[x+6,y]=0) and (mat[x,y]=0) and (mat[x-6,y]=0) and (range=true) ) ;
+
+          repeat
+            gotoxy(x+6,y);
+            write('O');
+            gotoxy(x,y);
+            write('O');
+            gotoxy(x-6,y);
+            write('O');
+            key:=0;
+            key:=keyread();
+
+            if(key<>13) then
+              begin
+            gotoxy(x+6,y);
+            write(' ');
+            gotoxy(x,y);
+            write(' ');
+            gotoxy(x-6,y);
+            write(' ');
+            if ((key=380) and (y<30) and (mat[x+6,y+3]=0) and (mat[x,y+3]=0) and (mat[x-6,y+3]=0) )then y:=y+3;
+
+            if ((key=372) and (y>7 ) and (mat[x+6,y-3]=0) and (mat[x,y-3]=0) and (mat[x-6,y-3]=0) )  then y:=y-3;
+
+            if ((key=377) and (x<56) and (mat[x+12,y]=0) and (mat[x+6,y]=0) and (mat[x,y]=0))  then x:=x+6;
+
+            if ((key=375) and (x>17) and (mat[x,y]=0) and (mat[x-6,y]=0) and (mat[x-12,y]=0))  then x:=x-6;
+
+               end;
+            until(key=13);
+            mat[x+6,y]:=1;
+            mat[x,y]:=1;
+            mat[x-6,y]:=1;
+              end;
+          3:begin
+            repeat
+            x:=34;
+            y:=20;
+            casual:=Random(10)-5;
+            x:=x +casual*6;
+            y:=y +casual*3;
+            if((y<34) and (x<67) and (x>7) and (y>4)) then range:=true
+                                                      else range:=false;
+            until((mat[x,y-3]=0) and (mat[x,y]=0) and (range=true) ) ;
+
+          repeat
+            gotoxy(x,y-3);
+            write('O');
+            gotoxy(x,y);
+            write('O');
+            key:=0;
+            key:=keyread();
+
+            if(key<>13) then
+              begin
+            gotoxy(x,y-3);
+            write(' ');
+            gotoxy(x,y);
+            write(' ');
+            if ((key=380) and (y<30) and (mat[x,y]=0) and (mat[x,y+3]=0) )then y:=y+3;
+
+            if ((key=372) and (y>9 ) and (mat[x,y-6]=0)  and (mat[x,y-3]=0) )  then y:=y-3;
+
+            if ((key=377) and (x<60) and (mat[x+6,y-3]=0) and (mat[x+6,y]=0))  then x:=x+6;
+
+            if ((key=375) and (x>15) and (mat[x-6,y-3]=0) and (mat[x-6,y]=0))  then x:=x-6;
+
+               end;
+
+            until(key=13);
+            mat[x,y-3]:=1;
+            mat[x,y]:=1;
+              end;
+          4:begin
+            repeat
+            x:=34;
+            y:=20;
+            casual:=Random(10)-5;
+            x:=x +casual*6;
+            y:=y +casual*3;
+            if((y<34) and (x<67) and (x>7) and (y>4)) then range:=true
+                                                      else range:=false;
+            until((mat[x+6,y]=0) and (mat[x,y]=0) and (range=true) ) ;
+
+          repeat
+            gotoxy(x+6,y);
+            write('O');
+            gotoxy(x,y);
+            write('O');
+            key:=0;
+            key:=keyread();
+
+            if(key<>13) then
+              begin
+            gotoxy(x+6,y);
+            write(' ');
+            gotoxy(x,y);
+            write(' ');
+            if ((key=380) and (y<30) and (mat[x+6,y+3]=0) and (mat[x,y+3]=0) )then y:=y+3;
+
+            if ((key=372) and (y>7 ) and (mat[x+6,y-3]=0)  and (mat[x,y-3]=0) )  then y:=y-3;
+
+            if ((key=377) and (x<57) and (mat[x+12,y]=0) and (mat[x+6,y]=0))  then x:=x+6;
+
+            if ((key=375) and (x>15) and (mat[x+12,y]=0) and (mat[x+6,y]=0))  then x:=x-6;
+
+               end;
+
+            until(key=13);
+              mat[x+6,y]:=1;
+              mat[x,y]:=1;
+              end;
+          5:begin
+            repeat
+            x:=34;
+            y:=20;
+            casual:=Random(10)-5;
+            x:=x +casual*6;
+            y:=y +casual*3;
+            if((y<34) and (x<67) and (x>7) and (y>4)) then range:=true
+                                                      else range:=false;
+            until((mat[x,y-3]=0) and (mat[x,y]=0) and (range=true) ) ;
+
+          repeat
+            gotoxy(x,y-3);
+            write('O');
+            gotoxy(x,y);
+            write('O');
+            key:=0;
+            key:=keyread();
+
+            if(key<>13) then
+              begin
+            gotoxy(x,y-3);
+            write(' ');
+            gotoxy(x,y);
+            write(' ');
+            if ((key=380) and (y<30) and (mat[x,y]=0) and (mat[x,y+3]=0) )then y:=y+3;
+
+            if ((key=372) and (y>9 ) and (mat[x,y-6]=0)  and (mat[x,y-3]=0) )  then y:=y-3;
+
+            if ((key=377) and (x<60) and (mat[x+6,y-3]=0) and (mat[x+6,y]=0))  then x:=x+6;
+
+            if ((key=375) and (x>15) and (mat[x-6,y-3]=0) and (mat[x-6,y]=0))  then x:=x-6;
+
+               end;
+
+            until(key=13);
+            mat[x,y-3]:=1;
+            mat[x,y]:=1;
+              end;
+     end;
+
+    until (key=13) ;
+
+   end;
+end;
+
+function gioco(var mat:matrice;nom:stringa):double ;
+var
+  cordinate:stringa;
+  i:char;
+  colpox,colpoy,count,fail,y,z:integer;
+  win:double;
+  input:boolean;
+begin
+//  win:=0;
+  fail:=3;
+  for y:=0 to 300 do
+   begin
+        for z:=0 to 300 do
+         begin
+         if (mat[z,y]=2) then
+            begin
+            textcolor(12);
+            gotoxy(z,y);
+            write('X');
+            textcolor(15);
+            end;
+
+        if (mat[z,y]=3) then
+            begin
+            textcolor(9);
+            gotoxy(z,y);
+            write('O');
+            textcolor(15)
+            end;
+         end;
+   end;
+  count:=0;
+
+  gotoxy(80,5);
+  write('COLONNELLO ',nom,' MI DICA LE CORDINATE:');
+while((fail>=0)) do
+  begin
+  repeat
+     input:=true;
+     gotoxy(80,7);
+     write('                                             ');
+     gotoxy(80,7);
+     readln(cordinate) ;
+     cordinate:=Upcase(cordinate);
+     if((length(cordinate)>3) and (cordinate[2]<>'1') and (cordinate[3]<>'0')) then
+       begin
+       gotoxy(88,7);
+       write('Cordinate inserite sbagliate!!');
+       Delay(700);
+       end;
+     if((cordinate[2]='1') and (cordinate[3]='0')) then
+       begin
+            input:=false;
+       end;
+  until ((length(cordinate)<3) or (input=false)) ;
+
+   count:=0;
+
+  for i:='A' to 'K' do
+   begin
+   count:=count+1;
+   if(cordinate[1]=i) then colpoy:=count;
+   end;
+
+  count:=0;
+  for i:='1' to '9' do
+   begin
+   count:=count+1;
+   if(cordinate[2]=i) then colpox:=count;
+   if((cordinate[2]='1') and (cordinate[3]='0')) then colpox:=10;
+   end;
+
+  colpoy:=(colpoy-1)*3+5;
+  colpox:=10+(colpox-1)*6;
+
+  if((mat[colpox,colpoy]=1) or (mat[colpox,colpoy]=2)) then
+    begin
+    gotoxy(colpox,colpoy);
+    textcolor(12);
+    write('X');
+    textcolor(15);
+    gotoxy(80,9);
+    write('                    ');
+    gotoxy(80,9);
+    textcolor(12);
+    write('COLPITO');
+    textcolor(15);
+    gotoxy(80,10);
+    write('Tentativi rimanenti:',fail);
+    mat[colpox,colpoy]:=2;
+    end
+  else
+  begin
+    gotoxy(colpox,colpoy);
+    textcolor(9);
+    write('O');
+    textcolor(15);
+    gotoxy(80,9);
+    write('                    ');
+    gotoxy(80,9);
+    textcolor(9);
+    write('L''ABBIAMO MANCATO');
+    textcolor(15);
+    mat[colpox,colpoy]:=3;
+    gotoxy(80,10);
+    fail:=fail-1;
+    write('Tentativi rimanenti:',fail);
+    if (fail=0) then
+      begin
+        gotoxy(80,15);
+        write('PREMERE INVIO PER PASSARE AL GIOCATORE SUCCESSIVO');
+      end;
+
+    end;
+
+  win:=0;
+  for y:=0 to 300 do
+   begin
+        for z:=0 to 300 do
+         begin
+         if (mat[z,y]=2) then win:=win+1;
+         end;
+   end;
+  if (win>15) then
+    begin
+    fail:=-1;
+    gotoxy(80,20);
+    write(nom,' HAI VINTO LA GUERRA');
+    delay(3000);
+    end;
+  end;
+  gioco:=win;
+end;
+
+
+var
+  mat1,mat2:matrice;
+  win:double;
+  nom1,nom2:stringa;
+begin
+  win:=0;
+  readln();
+  intro();
+  Delay(1000);
+  ClrScr;
+  azzeramatrice(mat1);
+  azzeramatrice(mat2);
+  write('Giocatore1 dimmi il tuo nome:');
+  readln(nom1);
+  nom1:=upcase(nom1);
+  ClrScr;
+  cursoroff;
+  tabellagioco();
+  posizionamentonavi(mat1,nom1);
+  ClrScr;
+  textcolor(15);
+  write('Giocatore2 dimmi il tuo nome:');
+  cursoron;
+  readln(nom2);
+  ClrScr;
+  nom2:=upcase(nom2);
+  cursoroff;
+  tabellagioco();
+  textcolor(15);
+  posizionamentonavi(mat2,nom2);
+  ClrScr;
+  textcolor(15);
+  tabellagioco();
+  cursoron;
+  while(win<15) do
+  begin
+    win:=gioco(mat1,nom1);
+    ClrScr;
+    if(win<15) then
+      begin
+        tabellagioco();
+        win:=gioco(mat2,nom2);
+        ClrScr;
+        tabellagioco();
+      end;
+  end;
+      readln();
+end.
